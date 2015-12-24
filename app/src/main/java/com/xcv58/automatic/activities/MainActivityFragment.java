@@ -1,12 +1,14 @@
 package com.xcv58.automatic.activities;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,6 +20,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.gson.Gson;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
@@ -32,13 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import retrofit.HttpException;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
-
-import static android.widget.Toast.LENGTH_LONG;
 
 /**
  * Created by xcv58 on 12/23/15.
@@ -60,6 +62,21 @@ public class MainActivityFragment extends Fragment {
     private AutomaticRESTService restService =
             ServiceFactory.createRetrofitService(AutomaticRESTService.class, BASE_URL);
     private String nextUrl = null;
+
+
+    private MaterialDialog.SingleButtonCallback error401Callback =
+            new MaterialDialog.SingleButtonCallback() {
+                @Override
+                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                    dialog.dismiss();
+                    final Intent settingsIntent = new Intent(getContext(), SettingsActivity.class);
+                    if (which == DialogAction.POSITIVE || which == DialogAction.NEUTRAL) {
+                        getContext().startActivity(settingsIntent);
+                    } else {
+                        alert(getString(R.string.auth_fail_title));
+                    }
+                }
+            };
 
     public MainActivityFragment() {
     }
@@ -119,21 +136,23 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (mAdapter.getItemCount() == 0) {
+        if (mAdapter.getItemCount() == 0 && !mSwipeRefreshLayout.isRefreshing()) {
             load();
+        }
+    }
+
+    private void alert(String alert) {
+        View view = getView();
+        if (view != null) {
+            Snackbar.make(view, alert, Snackbar.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), alert, Toast.LENGTH_LONG).show();
         }
     }
 
     private void load() {
         if (!hasActiveNetwork()) {
-            View view = getView();
-            String alert = "No Internet Connection!";
-            if (view != null) {
-                Snackbar.make(view, alert, Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            } else {
-                Toast.makeText(getActivity(), alert, LENGTH_LONG).show();
-            }
+            alert("No Internet Connection!");
             loadFinish();
             return;
         }
@@ -146,16 +165,12 @@ public class MainActivityFragment extends Fragment {
 
         Observable<TripResponse> tripResponseObservable =
                 restService.getTrip(token, queryMap)
-                        .onErrorReturn(new Func1<Throwable, TripResponse>() {
-                            @Override
-                            public TripResponse call(Throwable throwable) {
-                                throwable.printStackTrace();
-                                // TODO: handle network error including 401 and no internet
-                                Log.d(TAG, throwable.getMessage());
-                                Log.d(TAG, throwable.getClass().getName());
-                                return null;
-                            }
-                        })
+//                        .onErrorReturn(new Func1<Throwable, TripResponse>() {
+//                            @Override
+//                            public TripResponse call(Throwable throwable) {
+//                                return null;
+//                            }
+//                        })
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread());
 
@@ -167,6 +182,15 @@ public class MainActivityFragment extends Fragment {
 
             @Override
             public void onError(Throwable e) {
+                Log.d(TAG, "onError");
+                Log.d(TAG, e.getClass().getName());
+                if (e instanceof retrofit.HttpException) {
+                    HttpException exception = (retrofit.HttpException) e;
+                    int code = exception.code();
+                    if (code == 401) {
+                        onError401();
+                    }
+                }
                 loadFinish();
             }
 
@@ -225,6 +249,19 @@ public class MainActivityFragment extends Fragment {
             Log.d(TAG, "No token!");
         }
         return type + " " + token;
+    }
+
+    private void onError401() {
+        new MaterialDialog.Builder(getContext())
+                .title(R.string.auth_fail_title)
+                .content(R.string.auth_fail_content)
+                .positiveText(R.string.auth_fail_positive)
+                .negativeText(R.string.auth_fail_negative)
+                .cancelable(false)
+                .onPositive(error401Callback)
+                .onNegative(error401Callback)
+                .onNeutral(error401Callback)
+                .show();
     }
 
     private boolean hasActiveNetwork() {

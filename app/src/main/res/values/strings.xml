@@ -7,4 +7,9 @@
     <string name="preference_auth_type_summary">Bearer</string>
     <string name="preference_auth_token">Token</string>
     <string name="preference_auth_token_summary">Please input your token here!</string>
+
+    <string name="auth_fail_title">Authentication Failed</string>
+    <string name="auth_fail_content">Go to Settings to set your auth type and token?</string>
+    <string name="auth_fail_positive">OK</string>
+    <string name="auth_fail_negative">Cancel</string>
 </resources>

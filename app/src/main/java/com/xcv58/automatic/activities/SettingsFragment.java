@@ -25,13 +25,14 @@ public class SettingsFragment extends PreferenceFragment implements
         SharedPreferences sharedPreferences
                 = PreferenceManager.getDefaultSharedPreferences(getActivity());
         updateSummary(sharedPreferences, TYPE, TYPE_DEFAULT);
-        updateSummary(sharedPreferences, TOKEN);
     }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Log.d(MainActivityFragment.TAG, "onSharedPreferenceChanged: " + key);
-        updateSummary(sharedPreferences, key);
+        if (!key.equals(TOKEN)) {
+            updateSummary(sharedPreferences, key);
+        }
     }
 
     @Override
@@ -58,6 +59,5 @@ public class SettingsFragment extends PreferenceFragment implements
     private void updateSummary(SharedPreferences sharedPreferences, String key) {
         updateSummary(sharedPreferences, key, "");
     }
-
 }
 
