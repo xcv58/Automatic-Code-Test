@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Automatic</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="preference_auth_settings">Authentication</string>
+    <string name="preference_auth_type">Type</string>
+    <string name="preference_auth_type_summary">Bearer</string>
+    <string name="preference_auth_token">Token</string>
+    <string name="preference_auth_token_summary">Please input your token here!</string>
+</resources>
