@@ -1,16 +1,22 @@
 package com.xcv58.automatic.activities;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
@@ -32,6 +38,8 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
+import static android.widget.Toast.LENGTH_LONG;
+
 /**
  * Created by xcv58 on 12/23/15.
  */
@@ -43,7 +51,9 @@ public class MainActivityFragment extends Fragment {
     private final static String TRIPS_KEY = "TRIPS_KEY";
     private final static String NEXT_URL_KEY = "NEXT_URL_KEY";
 
+    private RecyclerView mRecyclerView;
     private TripAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     private SwipyRefreshLayout mSwipeRefreshLayout;
 
@@ -69,8 +79,11 @@ public class MainActivityFragment extends Fragment {
             nextUrl = savedInstanceState.getString(NEXT_URL_KEY);
         }
 
-        RecyclerView mRecyclerView = (RecyclerView) getActivity().findViewById(R.id.recycler_view);
+        mRecyclerView = (RecyclerView) getActivity().findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(false);
+
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
         mAdapter = new TripAdapter(tripList);
         mRecyclerView.setAdapter(mAdapter);
@@ -112,6 +125,19 @@ public class MainActivityFragment extends Fragment {
     }
 
     private void load() {
+        if (!hasActiveNetwork()) {
+            View view = getView();
+            String alert = "No Internet Connection!";
+            if (view != null) {
+                Snackbar.make(view, alert, Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            } else {
+                Toast.makeText(getActivity(), alert, LENGTH_LONG).show();
+            }
+            loadFinish();
+            return;
+        }
+
         mSwipeRefreshLayout.setRefreshing(true);
 
         Map<String, String> queryMap = getQueryMap(nextUrl);
@@ -126,6 +152,7 @@ public class MainActivityFragment extends Fragment {
                                 throwable.printStackTrace();
                                 // TODO: handle network error including 401 and no internet
                                 Log.d(TAG, throwable.getMessage());
+                                Log.d(TAG, throwable.getClass().getName());
                                 return null;
                             }
                         })
@@ -198,5 +225,12 @@ public class MainActivityFragment extends Fragment {
             Log.d(TAG, "No token!");
         }
         return type + " " + token;
+    }
+
+    private boolean hasActiveNetwork() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
     }
 }
