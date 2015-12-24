@@ -16,4 +16,7 @@ import rx.Observable;
 public interface AutomaticRESTService {
     @GET("trip/")
     Observable<TripResponse> getTrip(@Header("Authorization") String token, @QueryMap Map<String, String> options);
+
+    @GET("user/me/")
+    Observable<User> getUser(@Header("Authorization") String token, @QueryMap Map<String, String> options);
 }

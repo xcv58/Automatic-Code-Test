@@ -13,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,6 +29,7 @@ import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutD
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.rest.AutomaticRESTService;
 import com.xcv58.automatic.rest.ServiceFactory;
+import com.xcv58.automatic.rest.User;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.trip.TripResponse;
 
@@ -113,10 +115,6 @@ public class MainActivityFragment extends Fragment {
                 load();
             }
         });
-
-        if (tripList == null) {
-            load();
-        }
     }
 
     @Override
@@ -181,8 +179,6 @@ public class MainActivityFragment extends Fragment {
 
             @Override
             public void onError(Throwable e) {
-                Log.d(TAG, "onError");
-                Log.d(TAG, e.getClass().getName());
                 if (e instanceof retrofit.HttpException) {
                     HttpException exception = (retrofit.HttpException) e;
                     int code = exception.code();
@@ -244,19 +240,72 @@ public class MainActivityFragment extends Fragment {
                 SettingsFragment.TYPE_DEFAULT);
         String token = sharedPreferences.getString(SettingsFragment.TOKEN, "");
         if ("".equals(token)) {
-            new MaterialDialog.Builder(getContext())
-                    .title(R.string.first_time_title)
-                    .content(R.string.first_time_content)
-                    .positiveText(R.string.first_time_positive)
-                    .negativeText(R.string.first_time_negative)
-                    .cancelable(false)
-                    .onPositive(settingsCallback)
-                    .onNegative(settingsCallback)
-                    .onNeutral(settingsCallback)
-                    .show();
+            askToken(R.string.first_time_title, R.string.first_time_content);
             return null;
         }
         return type + " " + token;
+    }
+
+    private void askToken(int title, int content) {
+        new MaterialDialog.Builder(getContext())
+                .title(title)
+                .content(content)
+                .inputType(InputType.TYPE_CLASS_TEXT)
+                .cancelable(false)
+                .input(R.string.first_time_hint, R.string.first_time_fill,
+                        new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(MaterialDialog dialog, CharSequence input) {
+                                SharedPreferences sharedPreferences =
+                                        PreferenceManager.getDefaultSharedPreferences(getActivity());
+                                SharedPreferences.Editor editor = sharedPreferences.edit();
+                                String token = input.toString();
+                                editor.putString(SettingsFragment.TOKEN, token);
+                                if (editor.commit()) {
+                                    checkToken();
+                                } else {
+                                    Log.e(TAG, "Commit token to SharedPreferences failed!");
+                                }
+                            }
+                        }).show();
+    }
+
+    private void checkToken() {
+        final MaterialDialog dialog = new MaterialDialog.Builder(getContext())
+                .title(R.string.check_token_title)
+                .content(R.string.check_token_content)
+                .progress(true, 0)
+                .cancelable(false)
+                .show();
+
+        String token = getToken();
+        Map<String, String> queryMap = getQueryMap(nextUrl);
+
+        Observable<User> userObservable = restService.getUser(token, queryMap)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+        userObservable.subscribe(new Subscriber<User>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                askToken(R.string.auth_fail_title, R.string.first_time_content);
+                dialog.dismiss();
+            }
+
+            @Override
+            public void onNext(User user) {
+                dialog.dismiss();
+                if (user != null) {
+                    load();
+                } else {
+                    askToken(R.string.auth_fail_title, R.string.first_time_content);
+                }
+            }
+        });
     }
 
     private void onError401() {
