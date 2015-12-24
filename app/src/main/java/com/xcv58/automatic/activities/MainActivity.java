@@ -3,17 +3,17 @@ package com.xcv58.automatic.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.xcv58.automatic.R;
 
 public class MainActivity extends AppCompatActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,13 +22,35 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                sort();
             }
         });
+    }
+
+    private void sort() {
+        final MainActivityFragment fragment = (MainActivityFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_main);
+        new MaterialDialog.Builder(this)
+                .title(R.string.first_time_title)
+                .items(R.array.sort_keys)
+                .itemsCallbackSingleChoice(-1, new MaterialDialog.ListCallbackSingleChoice() {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        /**
+                         * If you use alwaysCallSingleChoiceCallback(), which is discussed below,
+                         * returning false here won't allow the newly selected radio button to actually be selected.
+                         **/
+                        Log.d(MainActivityFragment.TAG, "which: " + which + ", text: " + text);
+                        fragment.sort(which);
+                        return true;
+                    }
+                })
+                .positiveText(R.string.choose)
+                .show();
     }
 
     @Override

@@ -179,6 +179,7 @@ public class MainActivityFragment extends Fragment {
 
             @Override
             public void onError(Throwable e) {
+                e.printStackTrace();
                 if (e instanceof retrofit.HttpException) {
                     HttpException exception = (retrofit.HttpException) e;
                     int code = exception.code();
@@ -326,5 +327,10 @@ public class MainActivityFragment extends Fragment {
                 (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnected();
+    }
+
+    protected void sort(int sortKey) {
+        Log.d(TAG, "sort by: " + sortKey);
+        mAdapter.sort(sortKey);
     }
 }

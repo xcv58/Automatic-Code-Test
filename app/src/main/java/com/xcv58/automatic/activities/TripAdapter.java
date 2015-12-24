@@ -1,6 +1,7 @@
 package com.xcv58.automatic.activities;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,9 +9,14 @@ import android.widget.TextView;
 
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.trip.Trip;
+import com.xcv58.automatic.trip.TripComparatorByAddress;
+import com.xcv58.automatic.trip.TripComparatorByCost;
+import com.xcv58.automatic.trip.TripComparatorByDistance;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -19,7 +25,15 @@ import java.util.List;
  * TODO: add sort functions
  */
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
+    public final static int SORT_ADDRESS = 0;
+    public final static int SORT_DISTANCE = 1;
+    public final static int SORT_COST = 2;
+
     private ArrayList<Trip> mTrips;
+    private TripComparatorByAddress mComparatorByAddress = new TripComparatorByAddress();
+    private TripComparatorByCost mComparatorByCost = new TripComparatorByCost();
+    private TripComparatorByDistance mComparatorByDistance = new TripComparatorByDistance();
+    private Comparator<Trip> mComparator = null;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public View mView;
@@ -36,12 +50,12 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
         } else {
             mTrips = trips;
         }
-        this.notifyDataSetChanged();
+        notifyDataSetChanged();
     }
 
     public void addTrips(Trip[] trips) {
         mTrips.addAll(Arrays.asList(trips));
-        this.notifyDataSetChanged();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -74,5 +88,26 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
 
     public List<Trip> getData() {
         return mTrips;
+    }
+
+    public void sort(int key) {
+        switch (key) {
+            case SORT_ADDRESS:
+                mComparator = mComparatorByAddress;
+                break;
+            case SORT_COST:
+                mComparator = mComparatorByCost;
+                break;
+            case SORT_DISTANCE:
+                mComparator = mComparatorByDistance;
+                break;
+            default:
+                Log.e(MainActivityFragment.TAG, "sort key is: " + key + ". It's impossible!");
+                break;
+        }
+        if (mComparator != null) {
+            Collections.sort(mTrips, mComparator);
+            this.notifyDataSetChanged();
+        }
     }
 }

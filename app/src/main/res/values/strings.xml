@@ -23,4 +23,6 @@
     <string name="check_token_title">Checking Authentication Token</string>
     <string name="check_token_content">Checking your token</string>
 
+    <string name="Sort">Sort</string>
+    <string name="choose">Choose</string>
 </resources>
