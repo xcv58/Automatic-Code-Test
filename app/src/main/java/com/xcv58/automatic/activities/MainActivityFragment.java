@@ -64,7 +64,7 @@ public class MainActivityFragment extends Fragment {
     private String nextUrl = null;
 
 
-    private MaterialDialog.SingleButtonCallback error401Callback =
+    private MaterialDialog.SingleButtonCallback settingsCallback =
             new MaterialDialog.SingleButtonCallback() {
                 @Override
                 public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
@@ -75,6 +75,7 @@ public class MainActivityFragment extends Fragment {
                     } else {
                         alert(getString(R.string.auth_fail_title));
                     }
+                    dialog.dismiss();
                 }
             };
 
@@ -162,15 +163,13 @@ public class MainActivityFragment extends Fragment {
         Map<String, String> queryMap = getQueryMap(nextUrl);
 
         String token = getToken();
+        if (token == null) {
+            loadFinish();
+            return;
+        }
 
         Observable<TripResponse> tripResponseObservable =
                 restService.getTrip(token, queryMap)
-//                        .onErrorReturn(new Func1<Throwable, TripResponse>() {
-//                            @Override
-//                            public TripResponse call(Throwable throwable) {
-//                                return null;
-//                            }
-//                        })
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread());
 
@@ -245,8 +244,17 @@ public class MainActivityFragment extends Fragment {
                 SettingsFragment.TYPE_DEFAULT);
         String token = sharedPreferences.getString(SettingsFragment.TOKEN, "");
         if ("".equals(token)) {
-            // TODO: ask user to input token
-            Log.d(TAG, "No token!");
+            new MaterialDialog.Builder(getContext())
+                    .title(R.string.first_time_title)
+                    .content(R.string.first_time_content)
+                    .positiveText(R.string.first_time_positive)
+                    .negativeText(R.string.first_time_negative)
+                    .cancelable(false)
+                    .onPositive(settingsCallback)
+                    .onNegative(settingsCallback)
+                    .onNeutral(settingsCallback)
+                    .show();
+            return null;
         }
         return type + " " + token;
     }
@@ -258,9 +266,9 @@ public class MainActivityFragment extends Fragment {
                 .positiveText(R.string.auth_fail_positive)
                 .negativeText(R.string.auth_fail_negative)
                 .cancelable(false)
-                .onPositive(error401Callback)
-                .onNegative(error401Callback)
-                .onNeutral(error401Callback)
+                .onPositive(settingsCallback)
+                .onNegative(settingsCallback)
+                .onNeutral(settingsCallback)
                 .show();
     }
 
