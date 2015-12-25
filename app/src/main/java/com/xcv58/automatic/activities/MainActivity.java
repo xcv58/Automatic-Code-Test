@@ -26,9 +26,15 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sort();
+//                sort();
+                map();
             }
         });
+    }
+
+    private void map() {
+        Intent mapIntent = new Intent(this, MapsActivity.class);
+        startActivity(mapIntent);
     }
 
     private void sort() {
