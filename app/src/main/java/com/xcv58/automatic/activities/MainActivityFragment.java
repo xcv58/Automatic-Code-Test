@@ -140,6 +140,10 @@ public class MainActivityFragment extends Fragment {
         }
     }
 
+    public List<Trip> getTripList() {
+        return mAdapter.getData();
+    }
+
     private void alert(String alert) {
         View view = getView();
         if (view != null) {

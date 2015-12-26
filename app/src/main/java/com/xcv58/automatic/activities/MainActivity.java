@@ -12,6 +12,10 @@ import android.view.View;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.xcv58.automatic.R;
+import com.xcv58.automatic.trip.Trip;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -33,7 +37,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void map() {
+        final MainActivityFragment fragment = (MainActivityFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_main);
+
+        List<Trip> tripList =fragment.getTripList();
+        ArrayList<String> pathList = new ArrayList<>();
+
+        for (Trip trip : tripList) {
+            pathList.add(trip.path);
+        }
+
         Intent mapIntent = new Intent(this, MapsActivity.class);
+        mapIntent.putStringArrayListExtra(MapsActivity.PATH_KEY, pathList);
         startActivity(mapIntent);
     }
 
