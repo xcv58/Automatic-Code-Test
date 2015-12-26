@@ -1,0 +1,3 @@
+dependencies:
+  pre:
+    - echo y | android update sdk -a --no-ui --filter "extra-google-m2repository"
