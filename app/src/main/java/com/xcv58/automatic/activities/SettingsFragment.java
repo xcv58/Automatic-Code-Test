@@ -5,9 +5,9 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.xcv58.automatic.R;
+import com.xcv58.automatic.utils.Utils;
 
 /**
  * Created by xcv58 on 12/23/15.
@@ -29,7 +29,7 @@ public class SettingsFragment extends PreferenceFragment implements
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Log.d(MainActivityFragment.TAG, "onSharedPreferenceChanged: " + key);
+        Utils.log("onSharedPreferenceChanged: " + key);
         if (!key.equals(TOKEN)) {
             updateSummary(sharedPreferences, key);
         }

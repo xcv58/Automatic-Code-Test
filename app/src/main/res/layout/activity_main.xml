@@ -32,8 +32,7 @@
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            tools:context="com.xcv58.automatic.activities.MapsActivity" />
+            android:layout_weight="1"/>
 
         <fragment xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"

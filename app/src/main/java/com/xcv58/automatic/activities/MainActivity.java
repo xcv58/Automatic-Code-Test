@@ -1,23 +1,38 @@
 package com.xcv58.automatic.activities;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.PolyUtil;
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.trip.Trip;
+import com.xcv58.automatic.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+    private GoogleMap mMap;
+    private List<String> pathList;
+    public final static String PATH_KEY = "PATH_KEY";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -32,24 +50,22 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 //                sort();
                 map();
+//                test();
             }
         });
     }
 
     private void map() {
-        final MainActivityFragment fragment = (MainActivityFragment) getSupportFragmentManager()
+        final MainActivityFragment listFragment = (MainActivityFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_main);
 
-        List<Trip> tripList =fragment.getTripList();
+        List<Trip> tripList = listFragment.getTripList();
         ArrayList<String> pathList = new ArrayList<>();
 
         for (Trip trip : tripList) {
             pathList.add(trip.path);
         }
-
-        Intent mapIntent = new Intent(this, MapsActivity.class);
-        mapIntent.putStringArrayListExtra(MapsActivity.PATH_KEY, pathList);
-        startActivity(mapIntent);
+        draw(pathList);
     }
 
     private void sort() {
@@ -65,13 +81,18 @@ public class MainActivity extends AppCompatActivity {
                          * If you use alwaysCallSingleChoiceCallback(), which is discussed below,
                          * returning false here won't allow the newly selected radio button to actually be selected.
                          **/
-                        Log.d(MainActivityFragment.TAG, "which: " + which + ", text: " + text);
+                        Utils.log("which: " + which + ", text: " + text);
                         fragment.sort(which);
                         return true;
                     }
                 })
                 .positiveText(R.string.choose)
                 .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override
@@ -96,5 +117,46 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Utils.log("onMapReady");
+        mMap = googleMap;
+    }
+
+    private void draw(List<String> pathList) {
+        if (pathList == null || mMap == null) {
+            return;
+        }
+        double latMin = 90.0;
+        double latMax = -90.0;
+        double lonMin = 180.0;
+        double lonMax = -180.0;
+        for (String path : pathList) {
+            if (path == null) {
+                continue;
+            }
+            List<LatLng> list = PolyUtil.decode(path);
+            PolylineOptions options = new PolylineOptions();
+            for (LatLng latLng : list) {
+                latMax = Math.max(latMax, latLng.latitude);
+                latMin = Math.min(latMin, latLng.latitude);
+                lonMax = Math.max(lonMax, latLng.longitude);
+                lonMin = Math.min(lonMin, latLng.longitude);
+                options.add(latLng);
+            }
+            Random random = new Random();
+            int color = Color.argb(255, random.nextInt(255),
+                    random.nextInt(255), random.nextInt(255));
+            Polyline line = mMap.addPolyline(options
+                    .width(16)
+                    .color(color));
+        }
+        LatLngBounds bounds = new LatLngBounds(
+                new LatLng(latMin, lonMin),
+                new LatLng(latMax, lonMax));
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 64));
     }
 }

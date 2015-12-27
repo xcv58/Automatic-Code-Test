@@ -1,7 +1,6 @@
 package com.xcv58.automatic.activities;
 
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +11,7 @@ import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.trip.TripComparatorByAddress;
 import com.xcv58.automatic.trip.TripComparatorByCost;
 import com.xcv58.automatic.trip.TripComparatorByDistance;
+import com.xcv58.automatic.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
                 mComparator = mComparatorByDistance;
                 break;
             default:
-                Log.e(MainActivityFragment.TAG, "sort key is: " + key + ". It's impossible!");
+                Utils.log("sort key is: " + key + ". It's impossible!");
                 break;
         }
         if (mComparator != null) {

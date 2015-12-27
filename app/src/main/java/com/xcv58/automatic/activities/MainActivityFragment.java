@@ -15,7 +15,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputType;
 import android.util.ArrayMap;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +31,7 @@ import com.xcv58.automatic.rest.ServiceFactory;
 import com.xcv58.automatic.rest.User;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.trip.TripResponse;
+import com.xcv58.automatic.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +48,6 @@ import rx.schedulers.Schedulers;
  * Created by xcv58 on 12/23/15.
  */
 public class MainActivityFragment extends Fragment {
-
-    public final static String TAG = "automatic_code_test";
     private final static String BASE_URL = "https://api.automatic.com/";
 
     private final static String TRIPS_KEY = "TRIPS_KEY";
@@ -115,6 +113,7 @@ public class MainActivityFragment extends Fragment {
                 load();
             }
         });
+        mSwipeRefreshLayout.setRefreshing(true);
     }
 
     @Override
@@ -135,9 +134,15 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (mAdapter.getItemCount() == 0 && !mSwipeRefreshLayout.isRefreshing()) {
+        if (mAdapter.getItemCount() == 0) {
             load();
         }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        Utils.log("onAttach Main Fragment");
     }
 
     public List<Trip> getTripList() {
@@ -197,7 +202,7 @@ public class MainActivityFragment extends Fragment {
             @Override
             public void onNext(TripResponse tripResponse) {
                 if (tripResponse == null) {
-                    Log.d(TAG, "response is null!");
+                    Utils.log("response is null!");
                 } else {
                     mAdapter.addTrips(tripResponse.results);
                     nextUrl = tripResponse._metadata.next;
@@ -269,7 +274,7 @@ public class MainActivityFragment extends Fragment {
                                 if (editor.commit()) {
                                     checkToken();
                                 } else {
-                                    Log.e(TAG, "Commit token to SharedPreferences failed!");
+                                    Utils.log("Commit token to SharedPreferences failed!");
                                 }
                             }
                         }).show();
@@ -334,7 +339,7 @@ public class MainActivityFragment extends Fragment {
     }
 
     protected void sort(int sortKey) {
-        Log.d(TAG, "sort by: " + sortKey);
+        Utils.log("sort by: " + sortKey);
         mAdapter.sort(sortKey);
     }
 }

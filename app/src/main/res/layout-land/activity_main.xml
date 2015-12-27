@@ -32,7 +32,7 @@
             android:id="@+id/fragment_main"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="2"
+            android:layout_weight="1"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             tools:layout="@layout/fragment_main" />
         <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -42,8 +42,7 @@
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            tools:context="com.xcv58.automatic.activities.MapsActivity" />
+            android:layout_weight="1" />
     </android.support.v7.widget.LinearLayoutCompat>
 
     <android.support.design.widget.FloatingActionButton
