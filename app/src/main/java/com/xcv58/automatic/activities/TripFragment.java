@@ -32,6 +32,7 @@ import com.xcv58.automatic.rest.User;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.trip.TripResponse;
 import com.xcv58.automatic.utils.Utils;
+import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +100,8 @@ public class TripFragment extends Fragment {
 
         mRecyclerView = (RecyclerView) getActivity().findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(false);
+        mRecyclerView.addItemDecoration(new
+                HorizontalDividerItemDecoration.Builder(getContext()).build());
 
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -106,7 +109,8 @@ public class TripFragment extends Fragment {
         mAdapter = new TripAdapter(tripList);
         mRecyclerView.setAdapter(mAdapter);
 
-        mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity().findViewById(R.id.activity_main_swipe_refresh_layout);
+        mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity()
+                .findViewById(R.id.activity_main_swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipyRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh(SwipyRefreshLayoutDirection direction) {

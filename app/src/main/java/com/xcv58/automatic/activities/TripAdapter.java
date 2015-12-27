@@ -72,13 +72,41 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
         Trip trip = mTrips.get(position);
         updateText(holder, R.id.address_start, trip.start_address.display_name);
         updateText(holder, R.id.address_end, trip.end_address.display_name);
-        updateText(holder, R.id.cost, String.valueOf(trip.fuel_cost_usd));
-        updateText(holder, R.id.duration, String.valueOf(trip.duration_s));
+        updateText(holder, R.id.cost, String.format("$%.2f, ", trip.fuel_cost_usd));
+        updateText(holder, R.id.duration, getTime(trip.duration_s));
     }
 
     private void updateText(ViewHolder holder, int id, String text) {
         TextView textView = (TextView) holder.mView.findViewById(id);
         textView.setText(text);
+    }
+
+    private String getTime(String seconds) {
+        int totalSecs = 0;
+        try {
+            totalSecs = (int) Float.parseFloat(seconds);
+        } catch (NumberFormatException e) {
+            return seconds + "seconds";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+
+        int hours = totalSecs / 3600;
+        if (hours > 0) {
+            stringBuilder.append(hours);
+            stringBuilder.append("h ");
+            totalSecs = totalSecs % 3600;
+        }
+        int minutes = totalSecs / 60;
+        if (minutes > 0) {
+            stringBuilder.append(minutes);
+            stringBuilder.append("m ");
+            totalSecs = totalSecs % 60;
+        }
+        if (totalSecs > 0) {
+            stringBuilder.append(totalSecs);
+            stringBuilder.append("s");
+        }
+        return stringBuilder.toString();
     }
 
     @Override

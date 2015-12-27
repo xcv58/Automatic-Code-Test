@@ -39,6 +39,8 @@ dependencies {
 
     compile 'com.github.orangegangsters:swipy:1.2.1@aar'
 
+    compile 'com.yqritc:recyclerview-flexibledivider:1.2.6'
+
     compile('com.github.afollestad.material-dialogs:core:0.8.5.3@aar') {
         transitive = true
     }
