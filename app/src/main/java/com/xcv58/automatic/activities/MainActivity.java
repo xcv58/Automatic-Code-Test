@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void map() {
-        final MainActivityFragment listFragment = (MainActivityFragment) getSupportFragmentManager()
+        final TripFragment listFragment = (TripFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_main);
 
         List<Trip> tripList = listFragment.getTripList();
@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void sort() {
-        final MainActivityFragment fragment = (MainActivityFragment) getSupportFragmentManager()
+        final TripFragment fragment = (TripFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_main);
         new MaterialDialog.Builder(this)
                 .title(R.string.first_time_title)

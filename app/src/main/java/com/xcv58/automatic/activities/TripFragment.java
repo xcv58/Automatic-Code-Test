@@ -47,7 +47,7 @@ import rx.schedulers.Schedulers;
 /**
  * Created by xcv58 on 12/23/15.
  */
-public class MainActivityFragment extends Fragment {
+public class TripFragment extends Fragment {
     private final static String BASE_URL = "https://api.automatic.com/";
 
     private final static String TRIPS_KEY = "TRIPS_KEY";
@@ -79,7 +79,7 @@ public class MainActivityFragment extends Fragment {
                 }
             };
 
-    public MainActivityFragment() {
+    public TripFragment() {
     }
 
     @Override
