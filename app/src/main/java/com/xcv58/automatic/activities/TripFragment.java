@@ -36,6 +36,7 @@ import com.xcv58.automatic.utils.Utils;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +60,7 @@ public class TripFragment extends Fragment {
     private TripAdapter mAdapter;
     private LinearLayoutManager mLayoutManager;
     private SwipyRefreshLayout mSwipeRefreshLayout;
-
+    private ArrayList<Trip> mTripList;
 
     private AutomaticRESTService restService =
             ServiceFactory.createRetrofitService(AutomaticRESTService.class, BASE_URL);
@@ -104,11 +105,12 @@ public class TripFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ArrayList<Trip> tripList = null;
         if (savedInstanceState != null) {
-            tripList = getTrips(savedInstanceState.getStringArray(TRIPS_KEY));
+            mTripList = getTrips(savedInstanceState.getStringArray(TRIPS_KEY));
             nextUrl = savedInstanceState.getString(NEXT_URL_KEY);
-            updateMap(tripList);
+            updateMap(mTripList, 0);
+        } else {
+            mTripList = new ArrayList<>();
         }
 
         mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity()
@@ -122,7 +124,7 @@ public class TripFragment extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new TripAdapter(tripList);
+        mAdapter = new TripAdapter(mTripList);
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -148,7 +150,7 @@ public class TripFragment extends Fragment {
     public void onSaveInstanceState(Bundle savedState) {
         super.onSaveInstanceState(savedState);
 
-        List<Trip> trips = mAdapter.getData();
+        List<Trip> trips = mTripList;
         String[] values = new String[trips.size()];
         Gson gson = new Gson();
         for (int i = 0; i < trips.size(); i++) {
@@ -174,7 +176,7 @@ public class TripFragment extends Fragment {
     }
 
     public List<Trip> getTripList() {
-        return mAdapter.getData();
+        return mTripList;
     }
 
     private void alert(String alert) {
@@ -231,22 +233,21 @@ public class TripFragment extends Fragment {
                 if (tripResponse == null) {
                     Utils.log("response is null!");
                 } else {
-                    mAdapter.addTrips(tripResponse.results);
-                    updateMap(tripResponse.results);
+                    int preSize = mTripList.size();
                     nextUrl = tripResponse._metadata.next;
+
+                    mTripList.addAll(Arrays.asList(tripResponse.results));
+                    mAdapter.notifyDataSetChanged();
+
+                    updateMap(mTripList, preSize);
                 }
             }
         });
     }
 
-    private void updateMap(Trip[] trips) {
+    private void updateMap(List<Trip> tripList, int preSize) {
         MainActivity mainActivity = (MainActivity) getActivity();
-        mainActivity.updateMap(trips);
-    }
-
-    private void updateMap(List<Trip> tripList) {
-        MainActivity mainActivity = (MainActivity) getActivity();
-        mainActivity.updateMap(tripList);
+        mainActivity.updateMap(tripList, preSize);
     }
 
     private void loadProgress() {

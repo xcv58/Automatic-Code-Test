@@ -14,24 +14,25 @@ import com.xcv58.automatic.trip.TripComparatorByDistance;
 import com.xcv58.automatic.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by xcv58 on 12/23/15.
- * TripAdapter to hold data and update it.
+ * TripAdapter to hold and represent data.
  */
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
     public final static int SORT_ADDRESS = 0;
     public final static int SORT_DISTANCE = 1;
     public final static int SORT_COST = 2;
 
-    private ArrayList<Trip> mTrips;
+    // point to TripFragment.mTripLis
+    private ArrayList<Trip> mTripList;
+
     private TripComparatorByAddress mComparatorByAddress = new TripComparatorByAddress();
     private TripComparatorByCost mComparatorByCost = new TripComparatorByCost();
     private TripComparatorByDistance mComparatorByDistance = new TripComparatorByDistance();
+
     private Comparator<Trip> mComparator = null;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -44,16 +45,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
     }
 
     public TripAdapter(ArrayList<Trip> trips) {
-        if (trips == null) {
-            mTrips = new ArrayList<>();
-        } else {
-            mTrips = trips;
-        }
-        notifyDataSetChanged();
-    }
-
-    public void addTrips(Trip[] trips) {
-        mTrips.addAll(Arrays.asList(trips));
+        mTripList = trips;
         notifyDataSetChanged();
     }
 
@@ -65,10 +57,9 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
         return new ViewHolder(view);
     }
 
-    // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Trip trip = mTrips.get(position);
+        Trip trip = mTripList.get(position);
         updateText(holder, R.id.address_start, trip.start_address.display_name);
         updateText(holder, R.id.address_end, trip.end_address.display_name);
         updateText(holder, R.id.cost, String.format("$%.2f, ", trip.fuel_cost_usd));
@@ -110,11 +101,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return mTrips.size();
-    }
-
-    public List<Trip> getData() {
-        return mTrips;
+        return mTripList.size();
     }
 
     public void sort(int key) {
@@ -133,7 +120,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
                 break;
         }
         if (mComparator != null) {
-            Collections.sort(mTrips, mComparator);
+            Collections.sort(mTripList, mComparator);
             this.notifyDataSetChanged();
         }
     }

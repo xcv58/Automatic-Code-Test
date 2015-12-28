@@ -120,20 +120,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private double lonMin = 180.0;
     private double lonMax = -180.0;
 
-    protected void updateMap(List<Trip> tripList) {
+    protected void updateMap(List<Trip> tripList, int preSize) {
         ArrayList<String> pathList = new ArrayList<>();
 
-        for (Trip trip : tripList) {
-            pathList.add(trip.path);
-        }
-
-        drawPaths(pathList);
-    }
-
-    protected void updateMap(Trip[] trips) {
-        ArrayList<String> pathList = new ArrayList<>();
-
-        for (Trip trip : trips) {
+        for (int i = preSize; i < tripList.size(); i++) {
+            Trip trip = tripList.get(i);
             pathList.add(trip.path);
         }
 
@@ -145,7 +136,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
         if (mMap == null) {
-            this.pathList = pathList;
+            if (this.pathList == null) {
+                this.pathList = pathList;
+            } else {
+                this.pathList.addAll(pathList);
+            }
             return;
         }
         for (String path : pathList) {
