@@ -2,6 +2,7 @@ package com.xcv58.automatic.activities;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +17,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -37,8 +39,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Trip> mTripList = null;
     public final static String PATH_KEY = "PATH_KEY";
 
-    private final static int LINE_WIDTH = 16;
-    private final static int CIRCLE_RADIUS = 24;
+    private final static int LINE_WIDTH_DEFAULT = 16;
+    private final static int LINE_WIDTH_FOCUS = 32;
     private final static float ALPHA_DEFAULT = 0.5f;
     private final static float ALPHA_FOCUS = 1.0f;
 
@@ -134,15 +136,105 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (tripLine == null) {
             return;
         }
-        float alpha = tripLine.startMaker.getAlpha();
-        if (alpha == ALPHA_DEFAULT) {
-            tripLine.endMarker.setAlpha(ALPHA_FOCUS);
-            tripLine.startMaker.setAlpha(ALPHA_FOCUS);
-        } else {
-            tripLine.endMarker.setAlpha(ALPHA_DEFAULT);
-            tripLine.startMaker.setAlpha(ALPHA_DEFAULT);
-        }
+        tripLine.startMaker.setVisible(true);
+        tripLine.endMarker.setVisible(true);
+        tripLine.endMarker.setAlpha(ALPHA_FOCUS);
+        tripLine.startMaker.setAlpha(ALPHA_FOCUS);
+        tripLine.polyline.setWidth(LINE_WIDTH_FOCUS);
+
+        loops(tripLine, 0);
     }
+
+    private Location convertLatLngToLocation(LatLng latLng) {
+        Location location = new Location("");
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+        return location;
+    }
+
+    private float bearingBetweenLatLngs(LatLng beginLatLng, LatLng endLatLng) {
+        Location beginLocation = convertLatLngToLocation(beginLatLng);
+        Location endLocation = convertLatLngToLocation(endLatLng);
+        return beginLocation.bearingTo(endLocation);
+    }
+
+    private float preBearing = 0.0f;
+
+    private void loops(final TripLine tripLine, final int index) {
+        final List<LatLng> points = tripLine.polyline.getPoints();
+        if (index + 1 >= points.size()) {
+            LatLng start = points.get(index);
+            float mapZoom = mMap.getCameraPosition().zoom >= 16 ? mMap.getCameraPosition().zoom : 16;
+            CameraPosition cameraPosition =
+                    new CameraPosition.Builder()
+                            .target(start)
+                            .bearing(preBearing + BEARING_OFFSET)
+                            .tilt(90)
+                            .zoom(mapZoom)
+                            .build();
+            mMap.animateCamera(
+                    CameraUpdateFactory.newCameraPosition(cameraPosition),
+                    ANIMATE_SPEEED_TURN,
+                    new GoogleMap.CancelableCallback() {
+                        @Override
+                        public void onFinish() {
+                            Utils.log("finish: " + index + "/" + points.size());
+                            tripLine.startMaker.setVisible(false);
+                            tripLine.endMarker.setVisible(false);
+                            tripLine.endMarker.setAlpha(ALPHA_DEFAULT);
+                            tripLine.startMaker.setAlpha(ALPHA_DEFAULT);
+                            tripLine.polyline.setWidth(LINE_WIDTH_DEFAULT);
+                            tripLine.endMarker.setAlpha(ALPHA_DEFAULT);
+                            tripLine.startMaker.setAlpha(ALPHA_DEFAULT);
+                            tripLine.polyline.setWidth(LINE_WIDTH_DEFAULT);
+                        }
+
+                        @Override
+                        public void onCancel() {
+                            Utils.log("cancel");
+                            tripLine.startMaker.setVisible(false);
+                            tripLine.endMarker.setVisible(false);
+                            tripLine.endMarker.setAlpha(ALPHA_DEFAULT);
+                            tripLine.startMaker.setAlpha(ALPHA_DEFAULT);
+                            tripLine.polyline.setWidth(LINE_WIDTH_DEFAULT);
+                        }
+                    }
+            );
+            return;
+        }
+        LatLng start = points.get(index);
+        LatLng end = points.get(index + 1);
+
+        float mapZoom = mMap.getCameraPosition().zoom >= 16 ? mMap.getCameraPosition().zoom : 16;
+        float preBearing = bearingBetweenLatLngs(start, end);
+        CameraPosition cameraPosition =
+                new CameraPosition.Builder()
+                        .target(start)
+                        .bearing(preBearing + BEARING_OFFSET)
+                        .tilt(90)
+                        .zoom(mapZoom)
+                        .build();
+        mMap.animateCamera(
+                CameraUpdateFactory.newCameraPosition(cameraPosition),
+                ANIMATE_SPEEED_TURN,
+                new GoogleMap.CancelableCallback() {
+                    @Override
+                    public void onFinish() {
+                        Utils.log("finish: " + index + "/" + points.size());
+                        loops(tripLine, index + 1);
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        Utils.log("cancel");
+                    }
+                }
+        );
+    }
+
+    private static final int ANIMATE_SPEEED = 256;
+    private static final int ANIMATE_SPEEED_TURN = 256;
+    private static final int BEARING_OFFSET = 0;
 
     protected void updateMap(List<Trip> tripList, int preSize) {
         if (mMap == null) {
@@ -184,6 +276,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng startPoint = points.get(0);
         LatLng endPoint = points.get(points.size() - 1);
         Marker startMarker = mMap.addMarker(new MarkerOptions()
+                .visible(false)
                 .position(startPoint)
                 .draggable(false)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
@@ -191,6 +284,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .title("Start Address")
                 .snippet(trip.start_address.display_name));
         Marker endMarker = mMap.addMarker(new MarkerOptions()
+                .visible(false)
                 .position(endPoint)
                 .draggable(false)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
@@ -201,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int color = Color.argb(255, random.nextInt(255),
                 random.nextInt(255), random.nextInt(255));
         Polyline line = mMap.addPolyline(options
-                .width(LINE_WIDTH)
+                .width(LINE_WIDTH_DEFAULT)
                 .color(color));
         return new TripLine(startMarker, endMarker, line);
     }
