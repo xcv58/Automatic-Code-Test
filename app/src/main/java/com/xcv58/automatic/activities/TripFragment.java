@@ -7,6 +7,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -23,6 +25,7 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.gson.Gson;
+import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.rest.AutomaticRESTService;
 import com.xcv58.automatic.rest.ServiceFactory;
@@ -55,12 +58,23 @@ public class TripFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private TripAdapter mAdapter;
     private LinearLayoutManager mLayoutManager;
+    private SwipyRefreshLayout mSwipeRefreshLayout;
+
 
     private AutomaticRESTService restService =
             ServiceFactory.createRetrofitService(AutomaticRESTService.class, BASE_URL);
     private String nextUrl = null;
 
-    private boolean loading = false;
+    private Handler mHandler;
+    private final static long MIN_PROGRESS_APPEAR_TIME = 512L;
+    private Runnable setNotRefreshing = new Runnable() {
+        @Override
+        public void run() {
+            if (mSwipeRefreshLayout != null) {
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+        }
+    };
     int firstVisibleItem, visibleItemCount, totalItemCount;
 
     private MaterialDialog.SingleButtonCallback settingsCallback =
@@ -96,6 +110,9 @@ public class TripFragment extends Fragment {
             nextUrl = savedInstanceState.getString(NEXT_URL_KEY);
         }
 
+        mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity()
+                .findViewById(R.id.activity_main_swipe_refresh_layout);
+
         mRecyclerView = (RecyclerView) getActivity().findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(false);
         mRecyclerView.addItemDecoration(new
@@ -109,7 +126,7 @@ public class TripFragment extends Fragment {
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if (loading) {
+                if (mSwipeRefreshLayout.isRefreshing()) {
                     return;
                 }
                 if (dy > 0) {
@@ -122,6 +139,8 @@ public class TripFragment extends Fragment {
                 }
             }
         });
+
+        mHandler = new Handler();
     }
 
     @Override
@@ -172,7 +191,6 @@ public class TripFragment extends Fragment {
             return;
         }
 
-        loading = true;
         loadProgress();
 
         Map<String, String> queryMap = getQueryMap(nextUrl);
@@ -220,10 +238,14 @@ public class TripFragment extends Fragment {
     }
 
     private void loadProgress() {
+        mSwipeRefreshLayout.setRefreshing(true);
     }
 
     private void loadFinish() {
-        loading = false;
+        long startTime = mSwipeRefreshLayout.getDrawingTime();
+        long currentTime = SystemClock.uptimeMillis();
+        long remain = startTime + MIN_PROGRESS_APPEAR_TIME - currentTime;
+        mHandler.postDelayed(setNotRefreshing, remain);
     }
 
     private Map<String, String> getQueryMap(String url) {
