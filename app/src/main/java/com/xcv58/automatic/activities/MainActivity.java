@@ -56,10 +56,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void map() {
-        final TripFragment listFragment = (TripFragment) getSupportFragmentManager()
+        final TripFragment tripFragment = (TripFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_main);
 
-        List<Trip> tripList = listFragment.getTripList();
+        List<Trip> tripList = tripFragment.getTripList();
         ArrayList<String> pathList = new ArrayList<>();
 
         for (Trip trip : tripList) {

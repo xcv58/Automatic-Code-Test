@@ -22,7 +22,6 @@ import java.util.List;
 /**
  * Created by xcv58 on 12/23/15.
  * TripAdapter to hold data and update it.
- * TODO: add sort functions
  */
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.ViewHolder> {
     public final static int SORT_ADDRESS = 0;
