@@ -142,6 +142,17 @@ public class TripFragment extends Fragment {
                 }
             }
         });
+        mRecyclerView.addOnItemTouchListener(
+                new RecyclerItemClickListener(getContext(),
+                        new RecyclerItemClickListener.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(View view, int position) {
+                                Utils.log("click: " + position);
+                                MainActivity mainActivity = (MainActivity) getActivity();
+                                mainActivity.clickTrip(mTripList.get(position));
+                            }
+                        })
+        );
 
         mHandler = new Handler();
     }

@@ -15,8 +15,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
@@ -24,14 +27,20 @@ import com.xcv58.automatic.R;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.utils.Utils;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
-    private List<String> pathList;
+    private HashMap<String, TripLine> tripPolylineMap = new HashMap<>();
+    private List<Trip> mTripList = null;
     public final static String PATH_KEY = "PATH_KEY";
+
+    private final static int LINE_WIDTH = 16;
+    private final static int CIRCLE_RADIUS = 24;
+    private final static float ALPHA_DEFAULT = 0.5f;
+    private final static float ALPHA_FOCUS = 1.0f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,10 +118,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        if (this.pathList != null) {
-            drawPaths(this.pathList);
+        if (this.mTripList != null) {
+            updateMap(mTripList, 0);
         }
-        this.pathList = null;
+        this.mTripList = null;
     }
 
     private double latMin = 90.0;
@@ -120,48 +129,86 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private double lonMin = 180.0;
     private double lonMax = -180.0;
 
-    protected void updateMap(List<Trip> tripList, int preSize) {
-        ArrayList<String> pathList = new ArrayList<>();
-
-        for (int i = preSize; i < tripList.size(); i++) {
-            Trip trip = tripList.get(i);
-            pathList.add(trip.path);
+    protected void clickTrip(Trip trip) {
+        TripLine tripLine = tripPolylineMap.get(trip.id);
+        if (tripLine == null) {
+            return;
         }
-
-        drawPaths(pathList);
+        float alpha = tripLine.startMaker.getAlpha();
+        if (alpha == ALPHA_DEFAULT) {
+            tripLine.endMarker.setAlpha(ALPHA_FOCUS);
+            tripLine.startMaker.setAlpha(ALPHA_FOCUS);
+        } else {
+            tripLine.endMarker.setAlpha(ALPHA_DEFAULT);
+            tripLine.startMaker.setAlpha(ALPHA_DEFAULT);
+        }
     }
 
-    private void drawPaths(List<String> pathList) {
-        if (pathList == null) {
-            return;
-        }
+    protected void updateMap(List<Trip> tripList, int preSize) {
         if (mMap == null) {
-            if (this.pathList == null) {
-                this.pathList = pathList;
+            if (this.mTripList == null) {
+                this.mTripList = tripList;
             } else {
-                this.pathList.addAll(pathList);
+                this.mTripList.addAll(tripList);
             }
             return;
         }
-        for (String path : pathList) {
-            if (path == null) {
-                continue;
+        for (int i = preSize; i < tripList.size(); i++) {
+            Trip trip = tripList.get(i);
+            TripLine tripLine = drawPath(trip);
+            if (tripLine != null) {
+                tripPolylineMap.put(trip.id, tripLine);
             }
-            List<LatLng> list = PolyUtil.decode(path);
-            PolylineOptions options = new PolylineOptions();
-            for (LatLng latLng : list) {
-                latMax = Math.max(latMax, latLng.latitude);
-                latMin = Math.min(latMin, latLng.latitude);
-                lonMax = Math.max(lonMax, latLng.longitude);
-                lonMin = Math.min(lonMin, latLng.longitude);
-                options.add(latLng);
-            }
-            Random random = new Random();
-            int color = Color.argb(255, random.nextInt(255),
-                    random.nextInt(255), random.nextInt(255));
-            Polyline line = mMap.addPolyline(options
-                    .width(16)
-                    .color(color));
+        }
+        adjustMapCamera();
+    }
+
+    private TripLine drawPath(Trip trip) {
+        String path = trip.path;
+        if (path == null) {
+            return null;
+        }
+        List<LatLng> list = PolyUtil.decode(path);
+        PolylineOptions options = new PolylineOptions();
+        for (LatLng latLng : list) {
+            latMax = Math.max(latMax, latLng.latitude);
+            latMin = Math.min(latMin, latLng.latitude);
+            lonMax = Math.max(lonMax, latLng.longitude);
+            lonMin = Math.min(lonMin, latLng.longitude);
+            options.add(latLng);
+        }
+        List<LatLng> points = options.getPoints();
+        if (points.size() < 2) {
+            return null;
+        }
+        LatLng startPoint = points.get(0);
+        LatLng endPoint = points.get(points.size() - 1);
+        Marker startMarker = mMap.addMarker(new MarkerOptions()
+                .position(startPoint)
+                .draggable(false)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                .alpha(ALPHA_DEFAULT)
+                .title("Start Address")
+                .snippet(trip.start_address.display_name));
+        Marker endMarker = mMap.addMarker(new MarkerOptions()
+                .position(endPoint)
+                .draggable(false)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                .alpha(ALPHA_DEFAULT)
+                .title("End Address")
+                .snippet(trip.end_address.display_name + ", $" + trip.fuel_cost_usd));
+        Random random = new Random();
+        int color = Color.argb(255, random.nextInt(255),
+                random.nextInt(255), random.nextInt(255));
+        Polyline line = mMap.addPolyline(options
+                .width(LINE_WIDTH)
+                .color(color));
+        return new TripLine(startMarker, endMarker, line);
+    }
+
+    private void adjustMapCamera() {
+        if (mMap == null) {
+            return;
         }
         Utils.log("Lat: " + latMax + ", " + latMin + "Lon: " + lonMax + ", " + lonMin);
         LatLngBounds bounds = new LatLngBounds(
