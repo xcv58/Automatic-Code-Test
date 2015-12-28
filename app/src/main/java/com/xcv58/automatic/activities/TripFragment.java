@@ -23,8 +23,6 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.gson.Gson;
-import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
-import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.rest.AutomaticRESTService;
 import com.xcv58.automatic.rest.ServiceFactory;
@@ -56,14 +54,14 @@ public class TripFragment extends Fragment {
 
     private RecyclerView mRecyclerView;
     private TripAdapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
-
-    private SwipyRefreshLayout mSwipeRefreshLayout;
+    private LinearLayoutManager mLayoutManager;
 
     private AutomaticRESTService restService =
             ServiceFactory.createRetrofitService(AutomaticRESTService.class, BASE_URL);
     private String nextUrl = null;
 
+    private boolean loading = false;
+    int firstVisibleItem, visibleItemCount, totalItemCount;
 
     private MaterialDialog.SingleButtonCallback settingsCallback =
             new MaterialDialog.SingleButtonCallback() {
@@ -108,16 +106,22 @@ public class TripFragment extends Fragment {
 
         mAdapter = new TripAdapter(tripList);
         mRecyclerView.setAdapter(mAdapter);
-
-        mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity()
-                .findViewById(R.id.activity_main_swipe_refresh_layout);
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipyRefreshLayout.OnRefreshListener() {
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onRefresh(SwipyRefreshLayoutDirection direction) {
-                load();
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (loading) {
+                    return;
+                }
+                if (dy > 0) {
+                    visibleItemCount = mLayoutManager.getChildCount();
+                    totalItemCount = mLayoutManager.getItemCount();
+                    firstVisibleItem = mLayoutManager.findFirstVisibleItemPosition();
+                    if (firstVisibleItem + visibleItemCount >= totalItemCount) {
+                        load();
+                    }
+                }
             }
         });
-        mSwipeRefreshLayout.setRefreshing(true);
     }
 
     @Override
@@ -165,11 +169,11 @@ public class TripFragment extends Fragment {
     private void load() {
         if (!hasActiveNetwork()) {
             alert("No Internet Connection!");
-            loadFinish();
             return;
         }
 
-        mSwipeRefreshLayout.setRefreshing(true);
+        loading = true;
+        loadProgress();
 
         Map<String, String> queryMap = getQueryMap(nextUrl);
 
@@ -215,8 +219,11 @@ public class TripFragment extends Fragment {
         });
     }
 
+    private void loadProgress() {
+    }
+
     private void loadFinish() {
-        mSwipeRefreshLayout.setRefreshing(false);
+        loading = false;
     }
 
     private Map<String, String> getQueryMap(String url) {
