@@ -48,24 +48,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                sort();
-                map();
+                sort();
+//                map();
 //                test();
             }
         });
-    }
-
-    private void map() {
-        final TripFragment tripFragment = (TripFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_main);
-
-        List<Trip> tripList = tripFragment.getTripList();
-        ArrayList<String> pathList = new ArrayList<>();
-
-        for (Trip trip : tripList) {
-            pathList.add(trip.path);
-        }
-        draw(pathList);
     }
 
     private void sort() {
@@ -121,18 +108,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Utils.log("onMapReady");
         mMap = googleMap;
+        if (this.pathList != null) {
+            drawPaths(this.pathList);
+        }
+        this.pathList = null;
     }
 
-    private void draw(List<String> pathList) {
-        if (pathList == null || mMap == null) {
+    private double latMin = 90.0;
+    private double latMax = -90.0;
+    private double lonMin = 180.0;
+    private double lonMax = -180.0;
+
+    protected void updateMap(List<Trip> tripList) {
+        ArrayList<String> pathList = new ArrayList<>();
+
+        for (Trip trip : tripList) {
+            pathList.add(trip.path);
+        }
+
+        drawPaths(pathList);
+    }
+
+    protected void updateMap(Trip[] trips) {
+        ArrayList<String> pathList = new ArrayList<>();
+
+        for (Trip trip : trips) {
+            pathList.add(trip.path);
+        }
+
+        drawPaths(pathList);
+    }
+
+    private void drawPaths(List<String> pathList) {
+        if (pathList == null) {
             return;
         }
-        double latMin = 90.0;
-        double latMax = -90.0;
-        double lonMin = 180.0;
-        double lonMax = -180.0;
+        if (mMap == null) {
+            this.pathList = pathList;
+            return;
+        }
         for (String path : pathList) {
             if (path == null) {
                 continue;
@@ -153,10 +168,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .width(16)
                     .color(color));
         }
+        Utils.log("Lat: " + latMax + ", " + latMin + "Lon: " + lonMax + ", " + lonMin);
         LatLngBounds bounds = new LatLngBounds(
                 new LatLng(latMin, lonMin),
                 new LatLng(latMax, lonMax));
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 64));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 64));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 64));
     }
 }

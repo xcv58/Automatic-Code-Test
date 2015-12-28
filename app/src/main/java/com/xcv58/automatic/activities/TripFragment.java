@@ -108,6 +108,7 @@ public class TripFragment extends Fragment {
         if (savedInstanceState != null) {
             tripList = getTrips(savedInstanceState.getStringArray(TRIPS_KEY));
             nextUrl = savedInstanceState.getString(NEXT_URL_KEY);
+            updateMap(tripList);
         }
 
         mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity()
@@ -231,10 +232,21 @@ public class TripFragment extends Fragment {
                     Utils.log("response is null!");
                 } else {
                     mAdapter.addTrips(tripResponse.results);
+                    updateMap(tripResponse.results);
                     nextUrl = tripResponse._metadata.next;
                 }
             }
         });
+    }
+
+    private void updateMap(Trip[] trips) {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        mainActivity.updateMap(trips);
+    }
+
+    private void updateMap(List<Trip> tripList) {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        mainActivity.updateMap(tripList);
     }
 
     private void loadProgress() {
