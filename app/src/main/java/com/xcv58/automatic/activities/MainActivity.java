@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        if (this.mTripList != null) {
+        if (this.mTripList != null && this.mTripList.size() > 0) {
             updateMap(mTripList, 0);
         }
         this.mTripList = null;
