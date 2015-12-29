@@ -1,3 +1,4 @@
 dependencies:
   pre:
     - echo y | android update sdk -a --no-ui --filter "extra-google-m2repository"
+    - echo y | android update sdk -a --no-ui --filter "build-tools-23.0.2"
