@@ -6,10 +6,13 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -52,8 +55,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setSupportActionBar(toolbar);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(R.id.fragment_map);
         mapFragment.getMapAsync(this);
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
@@ -64,11 +68,65 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                test();
             }
         });
+        minimizeListWidth();
+    }
+
+    private void minimizeListWidth() {
+        LinearLayoutCompat linearLayout = (LinearLayoutCompat) findViewById(R.id.main_wrapper);
+        if (linearLayout.getOrientation() == LinearLayoutCompat.HORIZONTAL) {
+            final TripFragment listFragment = (TripFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.fragment_list);
+            divideHalf(listFragment.getView(), 10, false);
+        }
+    }
+
+    private void divideListMap() {
+        final LinearLayoutCompat linearLayout = (LinearLayoutCompat) findViewById(R.id.main_wrapper);
+        final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_map);
+        final TripFragment listFragment = (TripFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_list);
+        ViewTreeObserver.OnGlobalLayoutListener layoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                linearLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                int height = linearLayout.getHeight();
+                int width = linearLayout.getWidth();
+                if (height == 0) {
+                    return;
+                }
+                boolean isVertical = linearLayout.getOrientation() == LinearLayoutCompat.VERTICAL;
+                int size = isVertical ? height : width;
+                if (isVertical) {
+                    divideHalf(mapFragment.getView(), size, isVertical);
+                } else {
+                    divideHalf(listFragment.getView(), size, isVertical);
+                }
+            }
+        };
+
+        linearLayout.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+    }
+
+    private void divideHalf(View view, int num, boolean isVertical) {
+        if (view == null) {
+            return;
+        }
+        if (num <= 0) {
+            return;
+        }
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (isVertical) {
+            params.height = num / 2;
+        } else {
+            params.width = num / 2;
+        }
+        view.setLayoutParams(params);
     }
 
     private void sort() {
         final TripFragment fragment = (TripFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragment_main);
+                .findFragmentById(R.id.fragment_list);
         new MaterialDialog.Builder(this)
                 .title(R.string.first_time_title)
                 .items(R.array.sort_keys)
@@ -91,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onResume() {
         super.onResume();
+        divideListMap();
     }
 
     @Override
@@ -119,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        Utils.log("onMapReady");
         mMap = googleMap;
         if (this.mTripList != null && this.mTripList.size() > 0) {
             updateMap(mTripList, 0);
@@ -158,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return beginLocation.bearingTo(endLocation);
     }
 
-    private float preBearing = 0.0f;
+    private float baseBearing = 0.0f;
 
     private void loops(final TripLine tripLine, final int index) {
         final List<LatLng> points = tripLine.polyline.getPoints();
@@ -168,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             CameraPosition cameraPosition =
                     new CameraPosition.Builder()
                             .target(start)
-                            .bearing(preBearing + BEARING_OFFSET)
+                            .bearing(baseBearing + BEARING_OFFSET)
                             .tilt(90)
                             .zoom(mapZoom)
                             .build();
@@ -206,11 +266,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng end = points.get(index + 1);
 
         float mapZoom = mMap.getCameraPosition().zoom >= 16 ? mMap.getCameraPosition().zoom : 16;
-        float preBearing = bearingBetweenLatLngs(start, end);
+        baseBearing = bearingBetweenLatLngs(start, end);
         CameraPosition cameraPosition =
                 new CameraPosition.Builder()
                         .target(start)
-                        .bearing(preBearing + BEARING_OFFSET)
+                        .bearing(baseBearing + BEARING_OFFSET)
                         .tilt(90)
                         .zoom(mapZoom)
                         .build();
@@ -238,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     protected void updateMap(List<Trip> tripList, int preSize) {
         if (mMap == null) {
-            if (this.mTripList == null) {
+            if (this.mTripList == null || this.mTripList == tripList) {
                 this.mTripList = tripList;
             } else {
                 this.mTripList.addAll(tripList);
