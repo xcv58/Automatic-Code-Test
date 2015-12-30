@@ -10,6 +10,7 @@ import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -40,7 +41,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mMap;
     private HashMap<String, TripLine> tripPolylineMap = new HashMap<>();
     private List<Trip> mTripList = null;
+    private boolean isVertical = true;
+
     public final static String PATH_KEY = "PATH_KEY";
+
+    private final static int MIN_HEIGHT = 500;
+    private final static int MIN_WIDTH = 500;
 
     private final static int LINE_WIDTH_DEFAULT = 16;
     private final static int LINE_WIDTH_FOCUS = 32;
@@ -54,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_map);
         mapFragment.getMapAsync(this);
 
@@ -68,15 +74,62 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                test();
             }
         });
+
+        final LinearLayoutCompat linearLayout = (LinearLayoutCompat) findViewById(R.id.main_wrapper);
+        isVertical = linearLayout.getOrientation() == LinearLayoutCompat.VERTICAL;
+
         minimizeListWidth();
+
+        View dividerView = findViewById(R.id.divider);
+        dividerView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                final SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_map);
+                View mapView = mapFragment.getView();
+                final TripFragment tripFragment = (TripFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.fragment_list);
+                View listView = tripFragment.getView();
+                if (mapView == null || listView == null) {
+                    return true;
+                }
+                if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    float x = event.getX();
+                    float y = event.getY();
+                    ViewGroup.LayoutParams mapParams = mapView.getLayoutParams();
+                    ViewGroup.LayoutParams listParams = listView.getLayoutParams();
+                    if (isVertical) {
+                        mapParams.height += y;
+                        if (mapParams.height <= MIN_HEIGHT || listTooSmall(linearLayout, mapParams.height)) {
+                            // TODO: fix map resize bug when this happen
+                            return true;
+                        }
+                        mapView.setLayoutParams(mapParams);
+                    } else {
+                        listParams.width += x;
+                        mapParams.width -= x;
+                        if (Math.min(mapParams.width, listParams.width) <= MIN_WIDTH) {
+                            return true;
+                        }
+                        mapView.setLayoutParams(mapParams);
+                        listView.setLayoutParams(listParams);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    private boolean listTooSmall(LinearLayoutCompat linearLayout, int offset) {
+        int totalHeight = linearLayout.getHeight();
+        return totalHeight - offset <= MIN_HEIGHT;
     }
 
     private void minimizeListWidth() {
-        LinearLayoutCompat linearLayout = (LinearLayoutCompat) findViewById(R.id.main_wrapper);
-        if (linearLayout.getOrientation() == LinearLayoutCompat.HORIZONTAL) {
+        if (!isVertical) {
             final TripFragment listFragment = (TripFragment) getSupportFragmentManager()
                     .findFragmentById(R.id.fragment_list);
-            divideHalf(listFragment.getView(), 10, false);
+            divideHalf(listFragment.getView(), 10);
         }
     }
 
@@ -95,12 +148,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (height == 0) {
                     return;
                 }
-                boolean isVertical = linearLayout.getOrientation() == LinearLayoutCompat.VERTICAL;
                 int size = isVertical ? height : width;
                 if (isVertical) {
-                    divideHalf(mapFragment.getView(), size, isVertical);
+                    divideHalf(mapFragment.getView(), size);
                 } else {
-                    divideHalf(listFragment.getView(), size, isVertical);
+                    divideHalf(listFragment.getView(), size);
+                    divideHalf(mapFragment.getView(), size);
                 }
             }
         };
@@ -108,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         linearLayout.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
     }
 
-    private void divideHalf(View view, int num, boolean isVertical) {
+    private void divideHalf(View view, int num) {
         if (view == null) {
             return;
         }

@@ -28,6 +28,15 @@
         android:orientation="horizontal">
 
         <include layout="@layout/content_list" />
+        <ImageView
+            android:id="@+id/divider"
+            android:layout_gravity="center_horizontal"
+            android:paddingLeft="32px"
+            android:paddingRight="32px"
+            android:layout_height="fill_parent"
+            android:layout_width="wrap_content"
+            android:src="@android:drawable/divider_horizontal_dark"
+            android:contentDescription="divider" />
         <include layout="@layout/content_map" />
 
     </android.support.v7.widget.LinearLayoutCompat>

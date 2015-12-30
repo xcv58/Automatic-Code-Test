@@ -199,6 +199,10 @@ public class TripFragment extends Fragment {
         }
     }
 
+    protected int getVisibleItemCount() {
+        return mLayoutManager.getChildCount();
+    }
+
     private void load() {
         if (!hasActiveNetwork()) {
             alert("No Internet Connection!");
