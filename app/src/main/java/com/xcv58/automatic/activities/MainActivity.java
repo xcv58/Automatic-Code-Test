@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isVertical = true;
 
     public final static String PATH_KEY = "PATH_KEY";
+    private int drawPathNum = 0;
 
     private final static int MIN_HEIGHT = 500;
     private final static int MIN_WIDTH = 500;
@@ -90,39 +91,53 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 final TripFragment tripFragment = (TripFragment) getSupportFragmentManager()
                         .findFragmentById(R.id.fragment_list);
                 View listView = tripFragment.getView();
+                final View dividerView = findViewById(R.id.divider);
                 if (mapView == null || listView == null) {
                     return true;
                 }
                 if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    int top = linearLayout.getTop();
+                    int bottom = linearLayout.getBottom();
+                    int left = linearLayout.getLeft();
+                    int right = linearLayout.getRight();
+                    int height = linearLayout.getHeight();
+                    int width = linearLayout.getWidth();
                     float x = event.getX();
                     float y = event.getY();
+                    float rawX = event.getRawX();
+                    float rawY = event.getRawY();
                     ViewGroup.LayoutParams mapParams = mapView.getLayoutParams();
                     ViewGroup.LayoutParams listParams = listView.getLayoutParams();
                     if (isVertical) {
-                        mapParams.height += y;
-                        if (mapParams.height <= MIN_HEIGHT || listTooSmall(linearLayout, mapParams.height)) {
-                            // TODO: fix map resize bug when this happen
+                        float current = rawY + y;
+                        if (hitBorder(current, top, bottom, MIN_HEIGHT)) {
                             return true;
                         }
+                        mapParams.height += y;
                         mapView.setLayoutParams(mapParams);
                     } else {
-                        listParams.width += x;
-                        mapParams.width -= x;
-                        if (Math.min(mapParams.width, listParams.width) <= MIN_WIDTH) {
+                        float current = rawX + x;
+                        if (hitBorder(current, left, right, MIN_WIDTH)) {
                             return true;
                         }
+                        listParams.width += x;
+                        mapParams.width -= x;
                         mapView.setLayoutParams(mapParams);
                         listView.setLayoutParams(listParams);
                     }
+                    Utils.log("Linear: " + describeView(linearLayout));
+                    Utils.log("Map: " + describeView(mapView));
+                    Utils.log("Divider: " + describeView(dividerView));
+                    Utils.log("List: " + describeView(listView));
+                    Utils.log("--------------------------------");
                 }
                 return true;
             }
         });
     }
 
-    private boolean listTooSmall(LinearLayoutCompat linearLayout, int offset) {
-        int totalHeight = linearLayout.getHeight();
-        return totalHeight - offset <= MIN_HEIGHT;
+    private boolean hitBorder(float current, int start, int end, int limit) {
+        return current < start + limit || current > end - limit;
     }
 
     private void minimizeListWidth() {
@@ -139,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.fragment_map);
         final TripFragment listFragment = (TripFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_list);
+        final View dividerView = findViewById(R.id.divider);
         ViewTreeObserver.OnGlobalLayoutListener layoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -148,17 +164,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (height == 0) {
                     return;
                 }
-                int size = isVertical ? height : width;
+                int dividerWidth = dividerView.getWidth();
+                int dividerHeight = dividerView.getHeight();
+                int size = isVertical ? (height - dividerHeight) : (width - dividerWidth);
                 if (isVertical) {
                     divideHalf(mapFragment.getView(), size);
                 } else {
                     divideHalf(listFragment.getView(), size);
                     divideHalf(mapFragment.getView(), size);
                 }
+                Utils.log("size: " + size);
+                Utils.log("Linear: " + describeView(linearLayout));
+                Utils.log("Map: " + describeView(mapFragment.getView()));
+                Utils.log("Divider: " + describeView(dividerView));
+                Utils.log("List: " + describeView(listFragment.getView()));
             }
         };
 
         linearLayout.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+    }
+
+    private String describeView(View view) {
+        int top = view.getTop();
+        int bottom = view.getBottom();
+        int height = view.getHeight();
+        int left = view.getLeft();
+        int right = view.getRight();
+        int width = view.getWidth();
+        return top + " " + bottom + " " + height + "; "
+                + left + " " + right + " " + width;
     }
 
     private void divideHalf(View view, int num) {
@@ -174,6 +208,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             params.width = num / 2;
         }
+        Utils.log("set for " + num / 2 + " " + view);
         view.setLayoutParams(params);
     }
 
@@ -410,6 +445,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Polyline line = mMap.addPolyline(options
                 .width(LINE_WIDTH_DEFAULT)
                 .color(color));
+        drawPathNum += 1;
         return new TripLine(startMarker, endMarker, line);
     }
 
@@ -418,6 +454,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
         Utils.log("Lat: " + latMax + ", " + latMin + "Lon: " + lonMax + ", " + lonMin);
+        if (drawPathNum <= 0) {
+            return;
+        }
         LatLngBounds bounds = new LatLngBounds(
                 new LatLng(latMin, lonMin),
                 new LatLng(latMax, lonMax));

@@ -7,6 +7,7 @@ import android.util.Log;
  */
 public class Utils {
     public final static String TAG = "automatic_code_test";
+    public final static boolean DEBUG = true;
 
     public static void log() {
         log("");
@@ -17,6 +18,8 @@ public class Utils {
     }
 
     public static void log(String message) {
-        Log.d(TAG, message);
+        if (DEBUG) {
+            Log.d(TAG, message);
+        }
     }
 }

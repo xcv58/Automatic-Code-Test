@@ -30,6 +30,7 @@ import com.xcv58.automatic.R;
 import com.xcv58.automatic.rest.AutomaticRESTService;
 import com.xcv58.automatic.rest.ServiceFactory;
 import com.xcv58.automatic.rest.User;
+import com.xcv58.automatic.trip.Address;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.trip.TripResponse;
 import com.xcv58.automatic.utils.Utils;
@@ -205,7 +206,30 @@ public class TripFragment extends Fragment {
 
     private void load() {
         if (!hasActiveNetwork()) {
-            alert("No Internet Connection!");
+            if (Utils.DEBUG) {
+                loadProgress();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        List<Trip> tmpList = new ArrayList<>();
+                        for (int i = 0; i < 4; i++) {
+                            Trip trip = new Trip();
+                            trip.start_address = new Address();
+                            trip.start_address.display_name = "start address";
+                            trip.end_address = new Address();
+                            trip.end_address.display_name = "end address";
+                            trip.fuel_cost_usd = 1.0d;
+                            trip.duration_s = "duration";
+                            tmpList.add(trip);
+                        }
+                        mTripList.addAll(tmpList);
+                        mAdapter.notifyDataSetChanged();
+                        loadFinish();
+                    }
+                }, 1000);
+            } else {
+                alert("No Internet Connection!");
+            }
             return;
         }
 
