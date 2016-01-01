@@ -26,6 +26,7 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.gson.Gson;
 import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout;
+import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayoutDirection;
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.rest.AutomaticRESTService;
 import com.xcv58.automatic.rest.ServiceFactory;
@@ -116,6 +117,12 @@ public class TripFragment extends Fragment {
 
         mSwipeRefreshLayout = (SwipyRefreshLayout) getActivity()
                 .findViewById(R.id.activity_main_swipe_refresh_layout);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipyRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh(SwipyRefreshLayoutDirection direction) {
+                load();
+            }
+        });
 
         mRecyclerView = (RecyclerView) getActivity().findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(false);

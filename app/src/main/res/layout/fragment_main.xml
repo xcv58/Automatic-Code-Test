@@ -13,7 +13,7 @@
 
     <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
         android:id="@+id/activity_main_swipe_refresh_layout"
-        app:direction="bottom"
+        app:direction="both"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <include layout="@layout/recycler_view" />
