@@ -46,6 +46,7 @@ import java.util.Set;
 import retrofit.HttpException;
 import rx.Observable;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -63,6 +64,9 @@ public class TripFragment extends Fragment {
     private LinearLayoutManager mLayoutManager;
     private SwipyRefreshLayout mSwipeRefreshLayout;
     private ArrayList<Trip> mTripList;
+
+    private boolean firstLoad = false;
+    private MaterialDialog firstLoadDialog;
 
     private AutomaticRESTService restService =
             ServiceFactory.createRetrofitService(AutomaticRESTService.class, BASE_URL);
@@ -94,6 +98,9 @@ public class TripFragment extends Fragment {
                     dialog.dismiss();
                 }
             };
+
+
+    private Subscription mSubscription;
 
     public TripFragment() {
     }
@@ -189,6 +196,14 @@ public class TripFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mSubscription != null && !mSubscription.isUnsubscribed()) {
+            mSubscription.unsubscribe();
+        }
+    }
+
+    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         Utils.log("onAttach Main Fragment");
@@ -253,9 +268,10 @@ public class TripFragment extends Fragment {
         Observable<TripResponse> tripResponseObservable =
                 restService.getTrip(token, queryMap)
                         .subscribeOn(Schedulers.io())
+                        .unsubscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread());
 
-        tripResponseObservable.subscribe(new Subscriber<TripResponse>() {
+        mSubscription = tripResponseObservable.subscribe(new Subscriber<TripResponse>() {
             @Override
             public void onCompleted() {
                 loadFinish();
@@ -297,10 +313,25 @@ public class TripFragment extends Fragment {
     }
 
     private void loadProgress() {
-        mSwipeRefreshLayout.setRefreshing(true);
+        if (mAdapter.getItemCount() == 0) {
+            firstLoad = true;
+            firstLoadDialog = new MaterialDialog.Builder(getContext())
+                    .title(R.string.load_more_data)
+                    .content(R.string.load_more_data)
+                    .progress(true, 0)
+                    .cancelable(false)
+                    .show();
+        } else {
+            mSwipeRefreshLayout.setRefreshing(true);
+        }
     }
 
     private void loadFinish() {
+        if (firstLoad) {
+            firstLoad = false;
+            firstLoadDialog.dismiss();
+            return;
+        }
         long startTime = mSwipeRefreshLayout.getDrawingTime();
         long currentTime = SystemClock.uptimeMillis();
         long remain = startTime + MIN_PROGRESS_APPEAR_TIME - currentTime;
@@ -385,8 +416,9 @@ public class TripFragment extends Fragment {
 
         Observable<User> userObservable = restService.getUser(token, queryMap)
                 .subscribeOn(Schedulers.io())
+                .unsubscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
-        userObservable.subscribe(new Subscriber<User>() {
+        mSubscription = userObservable.subscribe(new Subscriber<User>() {
             @Override
             public void onCompleted() {
 
