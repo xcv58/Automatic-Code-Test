@@ -38,7 +38,7 @@ public class EspressoTest extends ActivityInstrumentationTestCase2<MainActivity>
     public void testToken() {
         onView(withClassName(endsWith("EditText")))
                 .check(matches(withHint(R.string.first_time_hint)))
-                .perform(replaceText("525b5d1d8f253877008012471d4f6955f3d12240"),
+                .perform(replaceText(BuildConfig.TOKEN),
                         closeSoftKeyboard());
         onView(allOf(withClassName(endsWith("MDButton")), withText("OK")))
                 .perform(click());

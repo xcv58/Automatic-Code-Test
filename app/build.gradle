@@ -22,6 +22,17 @@ android {
     }
 }
 
+def setBuildConfigField(name, flavor, type) {
+    def property = '""'
+    if (hasProperty(name as String)) {
+        property = String.format('"%s"', getProperty(name as String))
+    }
+    android.buildTypes.getAt(flavor).buildConfigField type, name, property
+}
+
+setBuildConfigField('TOKEN', 'debug', 'String')
+setBuildConfigField('INVALID_TOKEN', 'debug', 'String')
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
