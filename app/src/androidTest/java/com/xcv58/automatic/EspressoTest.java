@@ -4,6 +4,8 @@ import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.xcv58.automatic.activities.MainActivity;
+import com.xcv58.automatic.activities.TripFragment;
+import com.xcv58.automatic.utils.Utils;
 
 import org.junit.Before;
 
@@ -36,11 +38,21 @@ public class EspressoTest extends ActivityInstrumentationTestCase2<MainActivity>
     }
 
     public void testToken() {
+        Utils.log("test token");
         onView(withClassName(endsWith("EditText")))
                 .check(matches(withHint(R.string.first_time_hint)))
                 .perform(replaceText(BuildConfig.TOKEN),
                         closeSoftKeyboard());
         onView(allOf(withClassName(endsWith("MDButton")), withText("OK")))
                 .perform(click());
+        final TripFragment listFragment = (TripFragment) mMainActivity
+                .getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_list);
+        int size = listFragment.getTripList().size();
+//        assertTrue("Not empty list", size > 0);
+    }
+
+    public void testInvalidToken() {
+        Utils.log("test invalid token");
     }
 }
