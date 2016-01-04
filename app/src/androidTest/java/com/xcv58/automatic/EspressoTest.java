@@ -1,6 +1,7 @@
 package com.xcv58.automatic;
 
 import android.support.test.InstrumentationRegistry;
+import android.support.test.espresso.Espresso;
 import android.test.ActivityInstrumentationTestCase2;
 
 import com.xcv58.automatic.activities.MainActivity;
@@ -25,6 +26,8 @@ import static org.hamcrest.Matchers.endsWith;
  */
 public class EspressoTest extends ActivityInstrumentationTestCase2<MainActivity> {
     private MainActivity mMainActivity;
+    private TripFragment tripFragment;
+    private ProgressIdlingResource resource;
 
     public EspressoTest() {
         super(MainActivity.class);
@@ -35,6 +38,11 @@ public class EspressoTest extends ActivityInstrumentationTestCase2<MainActivity>
         super.setUp();
         injectInstrumentation(InstrumentationRegistry.getInstrumentation());
         mMainActivity = getActivity();
+
+        tripFragment = (TripFragment) mMainActivity.getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_list);
+        resource = new ProgressIdlingResource(tripFragment);
+        Espresso.registerIdlingResources(resource);
     }
 
     public void testToken() {
@@ -49,7 +57,7 @@ public class EspressoTest extends ActivityInstrumentationTestCase2<MainActivity>
                 .getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_list);
         int size = listFragment.getTripList().size();
-//        assertTrue("Not empty list", size > 0);
+        assertTrue("Not empty list", size > 0);
     }
 
     public void testInvalidToken() {

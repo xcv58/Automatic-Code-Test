@@ -31,7 +31,6 @@ import com.xcv58.automatic.R;
 import com.xcv58.automatic.rest.AutomaticRESTService;
 import com.xcv58.automatic.rest.ServiceFactory;
 import com.xcv58.automatic.rest.User;
-import com.xcv58.automatic.trip.Address;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.trip.TripResponse;
 import com.xcv58.automatic.utils.Utils;
@@ -79,6 +78,7 @@ public class TripFragment extends Fragment {
         public void run() {
             if (mSwipeRefreshLayout != null) {
                 mSwipeRefreshLayout.setRefreshing(false);
+                notifyListener(mProgressListener, false);
             }
         }
     };
@@ -102,7 +102,22 @@ public class TripFragment extends Fragment {
 
     private Subscription mSubscription;
 
+    private ProgressListener mProgressListener;
+
+    public interface ProgressListener {
+        public void onProgressShown();
+        public void onProgressDismissed();
+    }
+
     public TripFragment() {
+    }
+
+    public void setProgressListener(ProgressListener listener) {
+        mProgressListener = listener;
+    }
+
+    public boolean isInProgress() {
+        return mSwipeRefreshLayout.isRefreshing();
     }
 
     @Override
@@ -228,42 +243,18 @@ public class TripFragment extends Fragment {
 
     private void load() {
         if (!hasActiveNetwork()) {
-            if (Utils.DEBUG) {
-                loadProgress();
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        List<Trip> tmpList = new ArrayList<>();
-                        for (int i = 0; i < 4; i++) {
-                            Trip trip = new Trip();
-                            trip.start_address = new Address();
-                            trip.start_address.display_name = "start address";
-                            trip.end_address = new Address();
-                            trip.end_address.display_name = "end address";
-                            trip.fuel_cost_usd = 1.0d;
-                            trip.duration_s = "duration";
-                            tmpList.add(trip);
-                        }
-                        mTripList.addAll(tmpList);
-                        mAdapter.notifyDataSetChanged();
-                        loadFinish();
-                    }
-                }, 1000);
-            } else {
-                alert("No Internet Connection!");
-            }
+            alert("No Internet Connection!");
             return;
         }
-
-        loadProgress();
 
         Map<String, String> queryMap = getQueryMap(nextUrl);
 
         String token = getToken();
         if (token == null) {
-            loadFinish();
             return;
         }
+
+        loadProgress();
 
         Observable<TripResponse> tripResponseObservable =
                 restService.getTrip(token, queryMap)
@@ -321,21 +312,33 @@ public class TripFragment extends Fragment {
                     .progress(true, 0)
                     .cancelable(false)
                     .show();
-        } else {
-            mSwipeRefreshLayout.setRefreshing(true);
         }
+        mSwipeRefreshLayout.setRefreshing(true);
+        notifyListener(mProgressListener, true);
     }
 
     private void loadFinish() {
         if (firstLoad) {
             firstLoad = false;
             firstLoadDialog.dismiss();
+            mHandler.postDelayed(setNotRefreshing, 0);
             return;
         }
         long startTime = mSwipeRefreshLayout.getDrawingTime();
         long currentTime = SystemClock.uptimeMillis();
         long remain = startTime + MIN_PROGRESS_APPEAR_TIME - currentTime;
         mHandler.postDelayed(setNotRefreshing, remain);
+    }
+
+    private void notifyListener(ProgressListener listener, boolean isProgress) {
+        if (listener == null){
+            return;
+        }
+        if (isProgress) {
+            listener.onProgressShown();
+        } else {
+            listener.onProgressDismissed();
+        }
     }
 
     private Map<String, String> getQueryMap(String url) {
