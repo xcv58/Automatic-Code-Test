@@ -105,8 +105,8 @@ public class TripFragment extends Fragment {
     private ProgressListener mProgressListener;
 
     public interface ProgressListener {
-        public void onProgressShown();
-        public void onProgressDismissed();
+        void onProgressShown();
+        void onProgressDismissed();
     }
 
     public TripFragment() {
