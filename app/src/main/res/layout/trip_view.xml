@@ -4,16 +4,10 @@
     android:elevation="16dp"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/icon"
-        android:paddingLeft="@dimen/icon_left_padding"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/common_google_signin_btn_icon_dark"
-        android:contentDescription="test" />
     <LinearLayout
         android:id="@+id/head_line"
-        android:paddingLeft="@dimen/list_left_padding"
+        android:paddingStart="@dimen/icon_left_padding"
+        android:paddingEnd="@dimen/icon_left_padding"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal">
@@ -30,7 +24,8 @@
         android:layout_below="@id/head_line"
         android:layout_width="fill_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="@dimen/list_left_padding"
+        android:paddingStart="@dimen/icon_left_padding"
+        android:paddingEnd="@dimen/icon_left_padding"
         android:orientation="vertical">
         <TextView
             android:id="@+id/address_start"
