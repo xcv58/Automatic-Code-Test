@@ -95,41 +95,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (mapView == null || listView == null) {
                     return true;
                 }
-                if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                    int top = linearLayout.getTop();
-                    int bottom = linearLayout.getBottom();
-                    int left = linearLayout.getLeft();
-                    int right = linearLayout.getRight();
-                    int height = linearLayout.getHeight();
-                    int width = linearLayout.getWidth();
-                    float x = event.getX();
-                    float y = event.getY();
-                    float rawX = event.getRawX();
-                    float rawY = event.getRawY();
-                    ViewGroup.LayoutParams mapParams = mapView.getLayoutParams();
-                    ViewGroup.LayoutParams listParams = listView.getLayoutParams();
-                    if (isVertical) {
-                        float current = rawY + y;
-                        if (hitBorder(current, top, bottom, MIN_HEIGHT)) {
-                            return true;
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        int top = linearLayout.getTop();
+                        int bottom = linearLayout.getBottom();
+                        int left = linearLayout.getLeft();
+                        int right = linearLayout.getRight();
+                        int height = linearLayout.getHeight();
+                        int width = linearLayout.getWidth();
+                        float x = event.getX();
+                        float y = event.getY();
+                        float rawX = event.getRawX();
+                        float rawY = event.getRawY();
+                        ViewGroup.LayoutParams mapParams = mapView.getLayoutParams();
+                        ViewGroup.LayoutParams listParams = listView.getLayoutParams();
+                        if (isVertical) {
+                            float current = rawY + y;
+                            if (hitBorder(current, top, bottom, MIN_HEIGHT)) {
+                                return true;
+                            }
+                            mapParams.height += y;
+                            mapView.setLayoutParams(mapParams);
+                        } else {
+                            float current = rawX + x;
+                            if (hitBorder(current, left, right, MIN_WIDTH)) {
+                                return true;
+                            }
+                            listParams.width += x;
+                            mapParams.width -= x;
+                            mapView.setLayoutParams(mapParams);
+                            listView.setLayoutParams(listParams);
                         }
-                        mapParams.height += y;
-                        mapView.setLayoutParams(mapParams);
-                    } else {
-                        float current = rawX + x;
-                        if (hitBorder(current, left, right, MIN_WIDTH)) {
-                            return true;
-                        }
-                        listParams.width += x;
-                        mapParams.width -= x;
-                        mapView.setLayoutParams(mapParams);
-                        listView.setLayoutParams(listParams);
-                    }
-                    Utils.log("Linear: " + describeView(linearLayout));
-                    Utils.log("Map: " + describeView(mapView));
-                    Utils.log("Divider: " + describeView(dividerView));
-                    Utils.log("List: " + describeView(listView));
-                    Utils.log("--------------------------------");
+                        break;
+                    case MotionEvent.ACTION_DOWN:
+                        dividerView.setBackgroundColor(getResources().getColor(R.color.colorHover));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        dividerView.setBackgroundColor(getResources().getColor(R.color.colorStatic));
+                        break;
+                    default:
+                        break;
                 }
                 return true;
             }

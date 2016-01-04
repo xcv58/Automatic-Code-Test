@@ -28,4 +28,6 @@
     <string name="title_activity_maps">Map</string>
 
     <string name="load_more_data">Loading trip data</string>
+
+    <string name="divider">Divider</string>
 </resources>

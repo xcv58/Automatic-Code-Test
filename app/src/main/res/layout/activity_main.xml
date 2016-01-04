@@ -31,12 +31,12 @@
         <ImageView
             android:id="@+id/divider"
             android:layout_gravity="center_horizontal"
-            android:paddingTop="32px"
-            android:paddingBottom="32px"
             android:layout_height="wrap_content"
             android:layout_width="fill_parent"
+            android:background="@color/colorStatic"
+            android:padding="8dp"
             android:src="@android:drawable/divider_horizontal_dark"
-            android:contentDescription="divider" />
+            android:contentDescription="@string/divider" />
         <include layout="@layout/content_list" />
 
     </android.support.v7.widget.LinearLayoutCompat>
