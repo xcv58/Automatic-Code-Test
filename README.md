@@ -4,13 +4,14 @@
 ## Setup
 To run `connectedAndroidTest`, you **MUST** set properties: `TOKEN` and `INVALID_TOKEN`.
 There're several ways to set them:
-1. Edit/add file `gradle.properties` in the `./` or `./app/` directory. And add the following lines:
+
+a. Edit/add file `gradle.properties` in the `./` or `./app/` directory. And add the following lines:
 ```
 TOKEN=e5cdd2a2f2c52ac2ff9825f53ac566f45c513991
 INVALID_TOKEN=e5cdd2a2f2c52ac2ff9825f53ac566f45c513991
 ```
 
-2. Use environment variables:
+b. Use environment variables:
 ```
 export ORG_GRADLE_PROJECT_TOKEN=e5cdd2a2f2c52ac2ff9825f53ac566f45c513991
 export ORG_GRADLE_PROJECT_INVALID_TOKEN=e5cdd2a2f2c52ac2ff9825f53ac566f45c513991
