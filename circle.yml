@@ -16,7 +16,7 @@ test:
     # wait for it to have booted
     - circle-android wait-for-boot
     # run tests against the emulator.
-    - ./gradlew test
+    - ./gradlew connectedAndroidTest
     # copy the build outputs to artifacts
     # - cp -r my-project/build/outputs $CIRCLE_ARTIFACTS
     # copy the test results to the test results directory.
