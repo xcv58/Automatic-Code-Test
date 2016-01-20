@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -29,6 +31,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
+import com.optimizely.Optimizely;
 import com.xcv58.automatic.R;
 import com.xcv58.automatic.trip.Trip;
 import com.xcv58.automatic.utils.Utils;
@@ -36,6 +39,8 @@ import com.xcv58.automatic.utils.Utils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
@@ -57,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
+        Optimizely.startOptimizelyWithAPIToken(getString(R.string.com_optimizely_api_key), getApplication());
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -128,10 +135,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                         break;
                     case MotionEvent.ACTION_DOWN:
-                        dividerView.setBackgroundColor(getResources().getColor(R.color.colorHover));
+                        dividerView.setBackgroundColor(ContextCompat
+                                .getColor(getBaseContext(),R.color.colorHover));
                         break;
                     case MotionEvent.ACTION_UP:
-                        dividerView.setBackgroundColor(getResources().getColor(R.color.colorStatic));
+                        dividerView.setBackgroundColor(ContextCompat
+                                .getColor(getBaseContext(), R.color.colorStatic));
                         break;
                     default:
                         break;

@@ -30,4 +30,5 @@
     <string name="load_more_data">Loading trip data</string>
 
     <string name="divider">Divider</string>
+    <string name="com.optimizely.api_key" translatable="false">AANLYFYBWfZHRi5ZWY6WlJ8z_70Jiedx~4667690599</string>
 </resources>
