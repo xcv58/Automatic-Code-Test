@@ -18,6 +18,7 @@ test:
     - sleep 5
     - adb shell input keyevent 82
     # run tests against the emulator.
+    - ./gradlew check
     - ./gradlew test
     # - ./gradlew connectedAndroidTest
     # copy the build outputs to artifacts
